@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#F4EEE3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Fold AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<style>
+  :root{
+    --paper: #FFFFFF;
+    --paper-2: #F7F7F5;
+    --ink: #1C1B18;
+    --ink-soft: #6B685D;
+    --crease: #C1642F;
+    --crease-dark: #A24F22;
+    --fold-blue: #33415C;
+    --line: rgba(28,27,24,0.10);
+    --line-strong: rgba(28,27,24,0.18);
+    --side-bg: #F4EEE3;
+    --side-bg-hover: #EAE1D0;
+    --side-text: #2B2820;
+    --side-text-soft: #8A8172;
+    --side-line: rgba(43,40,32,0.10);
+  }
+  [data-theme="dark"]{
+    --paper: #212121;
+    --paper-2: #2A2A2A;
+    --ink: #ECECEC;
+    --ink-soft: #A8A8A0;
+    --line: rgba(255,255,255,0.10);
+    --line-strong: rgba(255,255,255,0.18);
+    --side-bg: #262019;
+    --side-bg-hover: #332B21;
+    --side-text: #ECE6DA;
+    --side-text-soft: #A69B87;
+    --side-line: rgba(255,255,255,0.08);
+  }
+  body{ transition: background 0.2s ease, color 0.2s ease; }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;overscroll-behavior:none;}
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+  }
+  button{ font-family: inherit; cursor: pointer; }
+  *{ scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+  ::-webkit-scrollbar{ width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track{ background: transparent; }
+  ::-webkit-scrollbar-thumb{ background: var(--line-strong); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover{ background: var(--crease); }
+
+  /* ---------------- Intro fold animation ---------------- */
+  #intro{
+    position: fixed; inset: 0;
+    background: var(--paper);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+    overflow: hidden;
+  }
+  .fold-stage{
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    height: clamp(140px, 20vw, 220px);
+    text-align: center;
+    padding: 0 2rem;
+  }
+  .fold-half{
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--paper);
+  }
+  .fold-half.top{
+    clip-path: polygon(0 0, 100% 0, 100% 50%, 0 50%);
+    transform-origin: bottom center;
+    animation: unfoldTop 1s cubic-bezier(.65,0,.35,1) forwards;
+  }
+  .fold-half.bottom{
+    clip-path: polygon(0 50%, 100% 50%, 100% 100%, 0 100%);
+    transform-origin: top center;
+    animation: unfoldBottom 1s cubic-bezier(.65,0,.35,1) forwards;
+  }
+  @keyframes unfoldTop{
+    0%{ transform: rotateX(-90deg); }
+    100%{ transform: rotateX(0deg); }
+  }
+  @keyframes unfoldBottom{
+    0%{ transform: rotateX(90deg); }
+    100%{ transform: rotateX(0deg); }
+  }
+  .crease-line{
+    position: absolute;
+    left: 8%; right: 8%; top: 50%;
+    height: 1px;
+    background: var(--line-strong);
+    transform: scaleX(0);
+    animation: creaseIn 0.4s ease 1s forwards;
+  }
+  @keyframes creaseIn{ to{ transform: scaleX(1); } }
+
+  .fold-logo{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(3rem, 12vw, 6.5rem);
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    opacity: 0;
+    animation: logoGlow 0.5s ease 1.3s forwards;
+  }
+  @keyframes logoGlow{
+    0%{ opacity: 0; letter-spacing: 0.08em; }
+    100%{ opacity: 1; letter-spacing: -0.02em; }
+  }
+  .fold-logo .accent{ color: var(--crease); }
+
+  .fold-credit{
+    position: absolute;
+    top: 100%;
+    margin-top: 1.4rem;
+    left: 0; right: 0;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    opacity: 0;
+    animation: creditIn 0.4s ease 1.7s forwards;
+  }
+  @keyframes creditIn{ to{ opacity: 1; } }
+
+  #intro.hide{
+    animation: introOut 0.5s ease forwards;
+    animation-delay: 2.5s;
+    pointer-events: none;
+    cursor: default;
+  }
+  @keyframes introOut{ to{ opacity: 0; visibility: hidden; } }
+
+  /* ---------------- App shell ---------------- */
+  #app{
+    display: flex;
+    height: 100vh;
+    opacity: 0;
+    animation: appIn 0.6s ease 3s forwards;
+  }
+  @keyframes appIn{ to{ opacity: 1; } }
+
+  .sidebar{
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--side-bg);
+    display: flex;
+    flex-direction: column;
+    padding: 0.7rem;
+    transition: width 0.2s ease, padding 0.2s ease, opacity 0.15s ease;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .sidebar.collapsed{
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    opacity: 0;
+  }
+  .sidebar-top-row{ display: flex; align-items: center; justify-content: space-between; }
+  .icon-btn{
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--side-text);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover{ background: var(--side-bg-hover); }
+  #sidebarOpenBtn{ color: var(--ink); }
+  #sidebarOpenBtn:hover{ background: var(--paper-2); }
+  #sidebarOpenBtn{ display: none; }
+  #sidebarOpenBtn.show{ display: flex; }
+  .search-box{
+    display: flex; align-items: center; gap: 8px;
+    background: var(--side-bg-hover);
+    border-radius: 10px;
+    padding: 0.5rem 0.7rem;
+    margin-bottom: 1rem;
+    color: var(--side-text-soft);
+    font-size: 15px;
+  }
+  .search-box input{
+    border: none; background: transparent; outline: none;
+    color: var(--side-text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+    width: 100%;
+  }
+  .search-box input::placeholder{ color: var(--side-text-soft); }
+  .brand-row{
+    display: flex; align-items: center; gap: 8px;
+    padding: 0.5rem 0.4rem 0.9rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--side-text);
+  }
+  .brand-row .accent{ color: var(--crease); }
+  .fold-mark{
+    width: 18px; height: 18px;
+    background: var(--side-text);
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+    flex-shrink: 0;
+  }
+  .new-chat-btn{
+    display: flex; align-items: center; gap: 8px;
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--side-line);
+    border-radius: 10px;
+    padding: 0.6rem 0.8rem;
+    font-size: 13.5px;
+    color: var(--side-text);
+    margin: 0.6rem 0 0.9rem;
+    transition: background 0.15s ease;
+  }
+  .new-chat-btn i{ font-size: 16px; }
+  .new-chat-btn:hover{ background: var(--side-bg-hover); }
+  .history-label{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--side-text-soft);
+    padding: 0 0.4rem;
+    margin-bottom: 0.4rem;
+  }
+  .history-list{ flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+  .history-item{
+    padding: 0.55rem 0.6rem;
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: var(--side-text-soft);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 2px;
+  }
+  .history-item:hover{ background: var(--side-bg-hover); color: var(--side-text); }
+  .history-item.active{ background: var(--side-bg-hover); color: var(--side-text); }
+
+  .sidebar-foot{
+    border-top: 1px solid var(--side-line);
+    padding-top: 0.7rem;
+    display: flex; flex-direction: column; gap: 2px;
+    flex-shrink: 0;
+  }
+  .sidebar-btn{
+    display: flex; align-items: center; gap: 8px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 0.6rem;
+    font-size: 13.5px;
+    color: var(--side-text);
+    text-align: left;
+  }
+  .sidebar-btn i{ font-size: 16px; }
+  .sidebar-btn:hover{ background: var(--side-bg-hover); }
+
+  /* ---------------- Main chat ---------------- */
+  .main{
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .topbar{
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.8rem 1.5rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+  }
+  .model-tag{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .model-tag .dot{ width:6px; height:6px; border-radius:50%; background: var(--crease); }
+  .topbar-actions{ display: flex; gap: 10px; }
+  .pill-btn{
+    border: 1px solid var(--line-strong);
+    background: var(--paper);
+    border-radius: 20px;
+    padding: 0.4rem 0.95rem;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .pill-btn.primary{
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .pill-btn:hover{ border-color: var(--crease); }
+
+  .messages{
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 2rem 1.5rem 1rem;
+  }
+  .messages-inner{ max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.4rem; }
+
+  .empty-state{
+    max-width: 560px;
+    margin: 4rem auto;
+    text-align: center;
+  }
+  .empty-state .fold-logo{ font-size: 3.6rem; margin-bottom: 1.4rem; }
+  .empty-state p{ color: var(--ink-soft); font-size: 14.5px; }
+  .suggestion-grid{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 1.6rem;
+  }
+  .suggestion{
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    text-align: left;
+    font-size: 13px;
+    color: var(--ink-soft);
+    background: var(--paper);
+  }
+  .suggestion:hover{ border-color: var(--crease); color: var(--ink); }
+
+  .msg{ font-size: 15px; line-height: 1.65; display: flex; gap: 12px; align-items: flex-start; }
+  .avatar{
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  .avatar.bot{ background: var(--ink); color: var(--paper); clip-path: polygon(0 0, 100% 0, 100% 100%); }
+  .avatar.user{ background: var(--crease); color: #fff; clip-path: none; border-radius: 50%; }
+  .msg-body{ flex: 1; min-width: 0; }
+  .msg .who{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+  .msg.user{
+    align-self: flex-end;
+    max-width: 82%;
+    margin-left: auto;
+    flex-direction: row-reverse;
+  }
+  .msg.user .msg-body{
+    background: var(--paper-2);
+    padding: 0.65rem 1rem;
+    border-radius: 18px;
+  }
+  .msg.assistant .msg-body{ white-space: pre-wrap; }
+  .msg.assistant .who{ color: var(--crease); }
+
+  .typing{ display: flex; gap: 4px; padding: 0.2rem 0; }
+  .typing span{ width:6px; height:6px; border-radius:50%; background: var(--line-strong); animation: bob 1.1s infinite ease-in-out; }
+  .typing span:nth-child(2){ animation-delay:0.15s; }
+  .typing span:nth-child(3){ animation-delay:0.3s; }
+  .typing-label{ font-size: 13px; color: var(--ink-soft); font-style: italic; }
+  @keyframes bob{ 0%,60%,100%{ transform: translateY(0); opacity:.5;} 30%{ transform: translateY(-4px); opacity:1;} }
+
+  .composer-wrap{ padding: 0.8rem 1.5rem 1.4rem; flex-shrink: 0; }
+  .test-maker-btn{
+    display: flex; align-items: center; gap: 6px;
+    max-width: 680px;
+    margin: 0 auto 0.6rem;
+    border: 1px solid var(--line-strong);
+    background: var(--paper);
+    border-radius: 20px;
+    padding: 0.4rem 0.9rem;
+    font-size: 12.5px;
+    color: var(--ink);
+  }
+  .test-maker-btn:hover{ border-color: var(--crease); color: var(--crease); }
+  .test-maker-btn i{ font-size: 14px; }
+  .auth-field select{
+    width: 100%;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    padding: 0.55rem 0.7rem;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--ink);
+    background: var(--paper);
+  }
+  .composer{
+    max-width: 680px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    border: 1px solid var(--line-strong);
+    border-radius: 28px;
+    padding: 0.65rem 0.7rem 0.65rem 1.1rem;
+    background: var(--paper);
+  }
+  .composer textarea{
+    flex: 1;
+    border: none;
+    resize: none;
+    font-family: inherit;
+    font-size: 14.5px;
+    color: var(--ink);
+    background: transparent;
+    max-height: 140px;
+    min-height: 24px;
+    padding: 0.3rem 0.2rem;
+  }
+  .composer textarea:focus{ outline: none; }
+  .send-circle{
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .send-circle:disabled{ background: var(--line-strong); }
+  .disclaimer{
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-top: 0.6rem;
+  }
+
+  /* ---------------- Modal ---------------- */
+  .modal-overlay{
+    position: fixed; inset: 0;
+    background: rgba(28,27,24,0.45);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 50;
+  }
+  .modal-overlay.show{ display: flex; }
+  .modal{
+    background: var(--paper);
+    border-radius: 14px;
+    width: 92%;
+    max-width: 560px;
+    padding: 1.6rem;
+    max-height: 82vh;
+    overflow-y: auto;
+  }
+  .modal-head{ display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .modal-head h2{ font-family: 'Space Grotesk', sans-serif; font-size: 20px; margin: 0; }
+  .modal-close{ background: none; border: none; font-size: 18px; color: var(--ink-soft); }
+
+  .plans{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .plan-card{
+    border: 1px solid var(--line-strong);
+    border-radius: 12px;
+    padding: 1.1rem;
+  }
+  .plan-card.featured{ border: 2px solid var(--crease); position: relative; }
+  .badge{
+    position: absolute; top: -10px; left: 1rem;
+    background: var(--crease); color: var(--paper);
+    font-size: 10.5px; padding: 2px 8px; border-radius: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .plan-name{ font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .plan-price{ font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 600; margin-bottom: 0.7rem; }
+  .plan-price span{ font-size: 13px; color: var(--ink-soft); font-family: 'Inter', sans-serif; font-weight: 400; }
+  .plan-list{ list-style: none; padding: 0; margin: 0 0 1rem; font-size: 13px; color: var(--ink-soft); }
+  .plan-list li{ padding: 3px 0; }
+  .plan-btn{
+    width: 100%;
+    border-radius: 8px;
+    padding: 0.55rem;
+    font-size: 13.5px;
+    border: 1px solid var(--line-strong);
+    background: var(--paper);
+  }
+  .plan-btn.primary{ background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  .modal-note{
+    margin-top: 1rem;
+    font-size: 12px;
+    color: var(--ink-soft);
+    background: var(--paper-2);
+    border-radius: 8px;
+    padding: 0.7rem 0.9rem;
+    line-height: 1.5;
+  }
+
+  .auth-modal{
+    max-width: 380px;
+    padding: 2rem 1.8rem 1.6rem;
+    position: relative;
+    text-align: center;
+  }
+  .auth-close{
+    position: absolute; top: 14px; right: 14px;
+    background: none; border: none; font-size: 16px; color: var(--ink-soft);
+  }
+  .auth-logo{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    margin-bottom: 1rem;
+  }
+  .auth-logo .accent{ color: var(--crease); }
+  .auth-heading{
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 19px;
+    font-weight: 500;
+    margin: 0 0 1.3rem;
+  }
+  .oauth-btn{
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%;
+    border: 1px solid var(--line-strong);
+    background: var(--paper);
+    border-radius: 8px;
+    padding: 0.65rem;
+    font-size: 14px;
+    color: var(--ink);
+    margin-bottom: 0.6rem;
+  }
+  .oauth-btn:hover{ background: var(--paper-2); }
+  .oauth-btn i{ font-size: 17px; }
+  .auth-divider{
+    display: flex; align-items: center; gap: 10px;
+    margin: 1.1rem 0;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+  }
+  .auth-divider::before, .auth-divider::after{
+    content: ''; flex: 1; height: 1px; background: var(--line);
+  }
+  .auth-field{
+    text-align: left;
+    margin-bottom: 0.7rem;
+  }
+  .auth-field label{
+    display: block;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .auth-field input{
+    width: 100%;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    padding: 0.55rem 0.7rem;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--ink);
+    background: var(--paper);
+  }
+  .auth-field input:focus{ outline: none; border-color: var(--crease); }
+  #emailAuthForm .plan-btn{ width: 100%; }
+  .auth-switch{
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 1.1rem;
+  }
+  .auth-switch button{
+    background: none; border: none;
+    color: var(--crease);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .user-chip{
+    display: flex; align-items: center; gap: 8px;
+    padding: 0.5rem 0.6rem;
+    border-radius: 8px;
+  }
+  .user-chip:hover{ background: var(--side-bg-hover); }
+  .user-chip .avatar{ width: 26px; height: 26px; font-size: 11px; }
+  .user-chip-name{ font-size: 13.5px; color: var(--side-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; text-align: left; }
+
+  .toast{
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: var(--paper);
+    padding: 0.7rem 1.1rem; border-radius: 8px;
+    font-size: 13px;
+    opacity: 0; pointer-events: none;
+    transition: all 0.25s ease;
+    z-index: 60;
+  }
+  .toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 720px){
+    .sidebar{ position: fixed; inset: 0 auto 0 0; z-index: 40; width: 260px; }
+    .sidebar.collapsed{ width: 0; }
+    #sidebarOpenBtn.show{ display: flex; }
+    .plans{ grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1 class="sr-only">Fold AI</h1>
+
+<div id="intro">
+  <div class="fold-stage">
+    <div class="fold-half top">
+      <div class="fold-logo">Fold <span class="accent">AI</span></div>
+    </div>
+    <div class="fold-half bottom">
+      <div class="fold-logo">Fold <span class="accent">AI</span></div>
+    </div>
+    <div class="crease-line"></div>
+    <div class="fold-credit">created by izhaan</div>
+  </div>
+</div>
+
+<div id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-top-row">
+      <div class="brand-row"><span class="fold-mark"></span>Fold <span class="accent">AI</span></div>
+      <button class="icon-btn side-icon-btn" id="sidebarCollapseBtn" aria-label="Close sidebar">✕</button>
+    </div>
+    <button class="new-chat-btn" id="newChatBtn"><i class="ti ti-plus"></i> New chat</button>
+    <div class="search-box">
+      <i class="ti ti-search"></i>
+      <input type="text" id="historySearch" placeholder="Search chats">
+    </div>
+    <div class="history-label">Today</div>
+    <div class="history-list" id="historyList"></div>
+    <div class="sidebar-foot">
+      <button class="sidebar-btn" id="themeToggleBtn"><i class="ti ti-moon" id="themeIcon"></i> <span id="themeLabel">Dark mode</span></button>
+      <button class="sidebar-btn" id="signInBtn"><i class="ti ti-brand-google"></i> Sign in with Google</button>
+      <button class="sidebar-btn" id="bridgeSidebarBtn"><i class="ti ti-plug-connected"></i> Jarvis Bridge</button>
+      <button class="sidebar-btn" id="upgradeSidebarBtn"><i class="ti ti-sparkles"></i> Upgrade plan</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button class="icon-btn" id="sidebarOpenBtn" aria-label="Open sidebar">☰</button>
+        <span class="model-tag"><span class="dot"></span>fold-1</span>
+      </div>
+    </div>
+
+    <div class="messages" id="messagesScroll">
+      <div class="messages-inner" id="messages">
+        <div class="empty-state" id="emptyState">
+          <div class="fold-logo">Fold <span class="accent">AI</span></div>
+          <div class="suggestion-grid">
+            <button class="suggestion" data-prompt="Solve 3x^2 - 12x + 9 = 0 and show your working">Solve 3x² − 12x + 9 = 0, show working</button>
+            <button class="suggestion" data-prompt="Prove that the sum of angles in a triangle is 180 degrees">Prove triangle angles sum to 180°</button>
+            <button class="suggestion" data-prompt="Find the 10th term of the AP: 2, 5, 8, 11, ...">10th term of an arithmetic progression</button>
+            <button class="suggestion" data-prompt="Explain sin, cos, and tan with a right triangle example">Explain sin, cos, tan simply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="composer-wrap">
+      <button class="test-maker-btn" id="testMakerBtn"><i class="ti ti-clipboard-list"></i> Make a revision test</button>
+      <div class="composer">
+        <textarea id="input" rows="1" placeholder="Message Fold AI..." aria-label="Message"></textarea>
+        <button class="send-circle" id="sendBtn" aria-label="Send">↑</button>
+      </div>
+      <p class="disclaimer">Fold AI can make mistakes. Check important maths and facts.</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="testMakerModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Make a revision test</h2>
+      <button class="modal-close" id="closeTestMaker">✕</button>
+    </div>
+    <div class="auth-field">
+      <label for="testTopic">Topic</label>
+      <input type="text" id="testTopic" placeholder="e.g. Quadratic equations, Trigonometry">
+    </div>
+    <div class="auth-field">
+      <label for="testCount">Number of questions</label>
+      <select id="testCount">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="15">15</option>
+      </select>
+    </div>
+    <div class="auth-field">
+      <label for="testDifficulty">Difficulty</label>
+      <select id="testDifficulty">
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard (exam-level)</option>
+      </select>
+    </div>
+    <button class="plan-btn primary" id="generateTestBtn" style="width:100%; margin-top:0.4rem;">Generate test</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="bridgeModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Jarvis Bridge</h2>
+      <button class="modal-close" id="closeBridge">✕</button>
+    </div>
+    <div id="bridgeStatus" style="font-size:13px; margin-bottom:0.9rem; color: var(--ink-soft);">Checking connection…</div>
+
+    <div class="auth-field">
+      <label for="bridgeToken">Bridge token</label>
+      <input type="text" id="bridgeToken" placeholder="Paste the token shown in your bridge_server.py terminal">
+    </div>
+    <button class="plan-btn primary" id="saveBridgeTokenBtn" style="width:100%; margin-bottom:1.1rem;">Save &amp; connect</button>
+
+    <div class="auth-field">
+      <label for="bridgeAppName">Open an app</label>
+      <input type="text" id="bridgeAppName" placeholder="e.g. spotify, chrome, notepad">
+    </div>
+    <button class="plan-btn" id="bridgeOpenAppBtn" style="width:100%; margin-bottom:1.1rem;">Open app</button>
+
+    <div class="auth-field">
+      <label for="bridgeUrl">Open a website</label>
+      <input type="text" id="bridgeUrl" placeholder="e.g. youtube.com">
+    </div>
+    <button class="plan-btn" id="bridgeOpenUrlBtn" style="width:100%; margin-bottom:1.1rem;">Open website</button>
+
+    <button class="plan-btn" id="bridgeScanBtn" style="width:100%;"><i class="ti ti-camera"></i> Scan my screen</button>
+    <div class="modal-note">Needs <code>bridge_server.py</code> running on this same computer — it only ever talks to 127.0.0.1, never over the internet.</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="upgradeModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Upgrade Fold AI</h2>
+      <button class="modal-close" id="closeUpgrade">✕</button>
+    </div>
+    <div class="plans">
+      <div class="plan-card">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">$0<span>/month</span></div>
+        <ul class="plan-list">
+          <li>Standard response speed</li>
+          <li>Everyday maths and questions</li>
+          <li>Limited daily messages</li>
+        </ul>
+        <button class="plan-btn" disabled>Current plan</button>
+      </div>
+      <div class="plan-card featured">
+        <span class="badge">Most popular</span>
+        <div class="plan-name">Fold Plus</div>
+        <div class="plan-price">$12<span>/month</span></div>
+        <ul class="plan-list">
+          <li>Faster, longer responses</li>
+          <li>Priority access during busy hours</li>
+          <li>Unlimited daily messages</li>
+        </ul>
+        <button class="plan-btn primary" id="upgradeConfirmBtn">Upgrade</button>
+      </div>
+    </div>
+    <div class="modal-note">This is a pricing preview only — no card will be charged. To take real payments, connect a Stripe (or similar) account on the backend.</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="signInModal">
+  <div class="modal auth-modal">
+    <button class="modal-close auth-close" id="closeSignIn">✕</button>
+    <div class="auth-logo">Fold <span class="accent">AI</span></div>
+    <h2 class="auth-heading" id="authHeading">Welcome back</h2>
+
+    <button class="oauth-btn" id="googleAuthBtn">
+      <i class="ti ti-brand-google" style="color:#4285F4;"></i> Continue with Google
+    </button>
+    <button class="oauth-btn" id="facebookAuthBtn">
+      <i class="ti ti-brand-facebook" style="color:#1877F2;"></i> Continue with Facebook
+    </button>
+
+    <div class="auth-divider"><span>OR</span></div>
+
+    <form id="emailAuthForm">
+      <div class="auth-field" id="nameFieldWrap" style="display:none;">
+        <label for="authName">Name</label>
+        <input type="text" id="authName" placeholder="Your name" autocomplete="name">
+      </div>
+      <div class="auth-field">
+        <label for="authEmail">Email</label>
+        <input type="email" id="authEmail" placeholder="you@example.com" required autocomplete="email">
+      </div>
+      <div class="auth-field">
+        <label for="authPassword">Password</label>
+        <input type="password" id="authPassword" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="plan-btn primary" style="margin-top:4px;">Continue</button>
+    </form>
+
+    <p class="auth-switch" id="authSwitchText">Don't have an account? <button type="button" id="authSwitchBtn">Sign up</button></p>
+  </div>
+</div>
+
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<script>
+  const intro = document.getElementById('intro');
+  setTimeout(() => intro.classList.add('hide'), 0);
+  intro.addEventListener('click', () => intro.classList.add('hide'));
+  intro.style.cursor = 'pointer';
+
+  const messagesEl = document.getElementById('messages');
+  const messagesScroll = document.getElementById('messagesScroll');
+  const emptyState = document.getElementById('emptyState');
+  const input = document.getElementById('input');
+  const sendBtn = document.getElementById('sendBtn');
+  const historyList = document.getElementById('historyList');
+
+  let history = [];
+  let isSending = false;
+  let currentChatId = null;
+
+  function loadAllChats(){
+    try {
+      return JSON.parse(localStorage.getItem('fold-chats') || '[]');
+    } catch(e) { return []; }
+  }
+  function saveAllChats(chats){
+    localStorage.setItem('fold-chats', JSON.stringify(chats));
+  }
+  function saveCurrentChat(){
+    if(!currentChatId || history.length === 0) return;
+    const chats = loadAllChats();
+    const idx = chats.findIndex(c => c.id === currentChatId);
+    const title = history[0].content.slice(0, 40);
+    const chatData = { id: currentChatId, title, messages: history, updatedAt: Date.now() };
+    if(idx >= 0) chats[idx] = chatData; else chats.unshift(chatData);
+    saveAllChats(chats);
+  }
+  function renderHistoryList(){
+    const chats = loadAllChats().sort((a,b) => b.updatedAt - a.updatedAt);
+    historyList.innerHTML = '';
+    chats.forEach(chat => {
+      const item = document.createElement('div');
+      item.className = 'history-item' + (chat.id === currentChatId ? ' active' : '');
+      item.textContent = chat.title;
+      item.addEventListener('click', () => openChat(chat.id));
+      historyList.appendChild(item);
+    });
+  }
+  function openChat(id){
+    const chats = loadAllChats();
+    const chat = chats.find(c => c.id === id);
+    if(!chat) return;
+    currentChatId = chat.id;
+    history = chat.messages;
+    messagesEl.innerHTML = '';
+    messagesEl.appendChild(emptyState);
+    if(history.length === 0){
+      emptyState.style.display = 'block';
+    } else {
+      emptyState.style.display = 'none';
+      history.forEach(m => addMessage(m.role === 'assistant' ? 'assistant' : 'user', m.content));
+    }
+    renderHistoryList();
+  }
+  function startNewChat(){
+    saveCurrentChat();
+    currentChatId = 'chat-' + Date.now();
+    history = [];
+    messagesEl.innerHTML = '';
+    messagesEl.appendChild(emptyState);
+    emptyState.style.display = 'block';
+    renderHistoryList();
+  }
+
+  const SYSTEM_PROMPT = "You are Fold AI, a maths tutor built specifically for students in grades 9 and 10, created by Izhaan. If asked who made you, who created you, or what company/model is behind you, always answer that you are Fold AI, created by Izhaan — never mention Google, Gemini, or any other underlying provider or company. You specialize in advanced problems at this level: quadratic equations, polynomials, trigonometry basics, coordinate geometry, surds, arithmetic and geometric progressions, and similar topics. When asked a maths question, show full step-by-step working, explain the reasoning behind each step like a good teacher would (not just the mechanics), use plain notation (x^2, sqrt(x), etc, no LaTeX symbols), and end with a clearly marked final answer. If a question is too advanced or too basic for grade 9-10, still help, but note that. For non-maths questions, be direct, accurate, and concise — keep replies as short as fully answering the question allows. You also have real tools — open_website, open_app, scan_screen, get_weather, get_system_stats, open_path, and make_presentation — that act on the user's own computer through their Jarvis Bridge or browser. You can also search the web directly for real-time information such as news, current events, or anything after your training cutoff. Use these when the user is clearly asking for one of those things (e.g. 'open youtube', 'what's on my screen', 'what's the weather', 'what's in the news today', 'how's my PC doing', 'make me a presentation on photosynthesis'). Do not confuse maths vocabulary like 'open interval' or 'open bracket' with a request to use a tool.";
+
+  function addMessage(role, text){
+    emptyState.style.display = 'none';
+    const div = document.createElement('div');
+    const avatar = document.createElement('div');
+    const body = document.createElement('div');
+    body.className = 'msg-body';
+
+    if(role === 'user'){
+      div.className = 'msg user';
+      avatar.className = 'avatar user';
+      avatar.textContent = 'U';
+      body.textContent = text;
+    } else {
+      div.className = 'msg assistant';
+      avatar.className = 'avatar bot';
+      const who = document.createElement('span');
+      who.className = 'who';
+      who.textContent = 'Fold AI';
+      body.appendChild(who);
+      const textSpan = document.createElement('span');
+      textSpan.textContent = text;
+      body.appendChild(textSpan);
+    }
+    div.appendChild(avatar);
+    div.appendChild(body);
+    messagesEl.appendChild(div);
+    messagesScroll.scrollTop = messagesScroll.scrollHeight;
+    return div;
+  }
+
+  function addTyping(label){
+    removeTyping();
+    const div = document.createElement('div');
+    div.className = 'typing';
+    div.id = 'typingIndicator';
+    div.innerHTML = label
+      ? `<span class="typing-label"></span>`
+      : '<span></span><span></span><span></span>';
+    if(label) div.querySelector('.typing-label').textContent = label;
+    messagesEl.appendChild(div);
+    messagesScroll.scrollTop = messagesScroll.scrollHeight;
+  }
+  function updateTyping(label){ addTyping(label); }
+  function removeTyping(){
+    const t = document.getElementById('typingIndicator');
+    if(t) t.remove();
+  }
+
+  function autoGrow(){
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+  }
+  input.addEventListener('input', autoGrow);
+
+  function setChatTitle(text){
+    if(chatTitleSet) return;
+    chatTitleSet = true;
+    const item = document.createElement('div');
+    item.className = 'history-item active';
+    item.textContent = text.slice(0, 40);
+    historyList.prepend(item);
+  }
+
+  // ---------------- Jarvis powers, decided by the AI itself ----------------
+  // Fold AI's model is given 3 tools (open_website, open_app, scan_screen).
+  // When you type "open youtube", Gemini itself decides to call open_website —
+  // Fold AI then actually runs it through the Jarvis Bridge and tells Gemini
+  // what happened so it can give you a real, grounded reply.
+
+  function describeTool(name, input){
+    if(name === 'open_website') return `opening ${input.url}`;
+    if(name === 'open_app') return `opening ${input.name}`;
+    if(name === 'scan_screen') return 'scanning your screen';
+    if(name === 'get_weather') return 'checking the weather';
+    if(name === 'get_system_stats') return 'checking your computer\'s stats';
+    if(name === 'open_path') return `opening ${input.path}`;
+    if(name === 'make_presentation') return `building a presentation on "${input.topic}"`;
+    return 'running a bridge action';
+  }
+
+  async function executeTool(name, input){
+    try {
+      if(name === 'open_website'){
+        const data = await bridgeFetch('/open-url', { method: 'POST', body: JSON.stringify({ url: input.url }) });
+        return { ok: !!data.ok, message: data.message || (data.ok ? `Opened ${input.url}` : 'Failed to open it') };
+      }
+      if(name === 'open_app'){
+        const data = await bridgeFetch('/open-app', { method: 'POST', body: JSON.stringify({ name: input.name }) });
+        return { ok: !!data.ok, message: data.message || (data.ok ? `Opened ${input.name}` : 'Failed to open it') };
+      }
+      if(name === 'scan_screen'){
+        const data = await bridgeFetch('/screenshot');
+        if(data.image_base64) return { ok: true, message: 'Screenshot captured', image_base64: data.image_base64 };
+        return { ok: false, message: data.error || "Couldn't reach the Jarvis Bridge." };
+      }
+      if(name === 'get_weather'){
+        if(!navigator.geolocation) return { ok: false, message: "This browser doesn't support location access." };
+        const pos = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 });
+        });
+        const { latitude, longitude } = pos.coords;
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,wind_speed_10m`);
+        const wdata = await res.json();
+        const c = wdata.current || {};
+        return { ok: true, message: 'Fetched current weather', data: { temperature_c: c.temperature_2m, wind_kmh: c.wind_speed_10m, weather_code: c.weather_code } };
+      }
+      if(name === 'get_system_stats'){
+        const data = await bridgeFetch('/system-stats');
+        if(data.error) return { ok: false, message: data.error };
+        return { ok: true, message: 'Fetched system stats', data };
+      }
+      if(name === 'open_path'){
+        const data = await bridgeFetch('/open-path', { method: 'POST', body: JSON.stringify({ path: input.path }) });
+        return { ok: !!data.ok, message: data.message };
+      }
+      if(name === 'make_presentation'){
+        return await generatePresentation(input.topic, input.slide_count || 6);
+      }
+    } catch(e){
+      if(name === 'get_weather') return { ok: false, message: "Couldn't get your location — check that location access is allowed for this site." };
+      return { ok: false, message: "Couldn't reach your Jarvis Bridge — make sure bridge_server.py is running on this computer and is connected (sidebar → Jarvis Bridge)." };
+    }
+    return { ok: false, message: 'Unknown tool' };
+  }
+
+  async function generatePresentation(topic, slideCount){
+    if(typeof PptxGenJS === 'undefined'){
+      return { ok: false, message: "The presentation library didn't load — check your internet connection and try again." };
+    }
+    try {
+      const prompt = `Create outline content for a ${slideCount}-slide presentation on "${topic}", suitable for a grade 9-10 student. Respond with ONLY valid JSON, no markdown fences, no extra commentary, in exactly this shape: {"title": string, "slides": [{"heading": string, "bullets": [string, string, string]}]}`;
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], json_mode: true })
+      });
+      const data = await res.json();
+      const block = data.content?.[0];
+      if(!block || block.type !== 'text') return { ok: false, message: 'Could not generate slide content.' };
+
+      let parsed;
+      try {
+        const cleaned = block.text.trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim();
+        parsed = JSON.parse(cleaned);
+      } catch(e){
+        return { ok: false, message: 'Got a malformed response while generating the presentation.' };
+      }
+
+      const title = parsed.title || topic;
+      const slides = Array.isArray(parsed.slides) ? parsed.slides : [];
+      buildAndDownloadPptx(title, slides);
+      return { ok: true, message: `Generated a ${slides.length}-slide presentation on "${title}" and downloaded it.` };
+    } catch(e){
+      return { ok: false, message: 'Something went wrong generating the presentation.' };
+    }
+  }
+
+  // Fold AI's own colors — kept consistent with the rest of the app
+  const PPTX_COLORS = {
+    bg: 'FAFAF6', panel: 'F4EEE3', surface: 'FFFFFF',
+    text: '1A1611', muted: '8A8072',
+    accent: 'C1652F', accent2: '1A1611', accent3: 'D98A55',
+    line: 'E4DCC9'
+  };
+
+  // NOTE ON SHAPE CHOICE: rounded-rectangle panels + a separate colored
+  // accent-bar shape overlaid on top is a known PptxGenJS rendering defect
+  // (the square accent bar doesn't follow the rounded corner and can
+  // corrupt the file). Plain rectangles are used throughout instead —
+  // verified end-to-end before shipping.
+
+  function pptxAddBg(slide, variant){
+    const C = PPTX_COLORS;
+    slide.background = { color: C.bg };
+    slide.addShape('rect', { x: 0, y: 0, w: 13.333, h: 0.16, fill: { color: C.accent }, line: { type: 'none' } });
+    if(variant === 'cover'){
+      slide.addShape('rect', { x: 9.6, y: 0.55, w: 3.15, h: 6.35, fill: { color: C.panel }, line: { type: 'none' } });
+      slide.addShape('rect', { x: 9.6, y: 0.55, w: 0.07, h: 6.35, fill: { color: C.accent3 }, line: { type: 'none' } });
+    } else {
+      slide.addShape('rect', { x: 0.25, y: 0.55, w: 0.06, h: 6.4, fill: { color: C.accent3 }, line: { type: 'none' } });
+    }
+  }
+
+  function pptxSectionHeader(slide, titleText, kicker, x, y, w, accent){
+    const C = PPTX_COLORS;
+    slide.addText(kicker.toUpperCase(), { x, y, w, h: 0.3, fontSize: 11, bold: true, color: accent, fontFace: 'Georgia' });
+    slide.addText(titleText, { x, y: y + 0.28, w, h: 0.6, fontSize: 24, bold: true, color: C.text, fontFace: 'Georgia' });
+    slide.addShape('rect', { x, y: y + 0.92, w: 2.0, h: 0.05, fill: { color: accent }, line: { type: 'none' } });
+  }
+
+  function pptxBulletCard(slide, x, y, w, h, heading, bullets, accent){
+    const C = PPTX_COLORS;
+    slide.addShape('rect', { x, y, w, h, fill: { color: C.surface }, line: { color: C.line, width: 1 } });
+    slide.addShape('rect', { x, y, w: 0.08, h, fill: { color: accent }, line: { type: 'none' } });
+    slide.addText(heading.toUpperCase(), { x: x + 0.2, y: y + 0.15, w: w - 0.4, h: 0.3, fontSize: 12, bold: true, color: accent });
+    const safeBullets = (Array.isArray(bullets) ? bullets : []).slice(0, 6).filter(Boolean);
+    const bulletRuns = safeBullets.length
+      ? safeBullets.map(b => ({ text: String(b), options: { bullet: true, breakLine: true, color: C.text, fontSize: 15 } }))
+      : [{ text: 'Add supporting content.', options: { color: C.muted, fontSize: 15 } }];
+    slide.addText(bulletRuns, { x: x + 0.22, y: y + 0.55, w: Math.max(w - 0.45, 0.5), h: Math.max(h - 0.75, 0.5) });
+  }
+
+  function pptxKpi(slide, x, y, w, h, label, value, accent){
+    const C = PPTX_COLORS;
+    slide.addShape('rect', { x, y, w, h, fill: { color: C.panel }, line: { type: 'none' } });
+    slide.addShape('rect', { x, y, w, h: 0.05, fill: { color: accent }, line: { type: 'none' } });
+    slide.addText(label.toUpperCase(), { x: x + 0.15, y: y + 0.12, w: w - 0.3, h: 0.22, fontSize: 9, bold: true, color: C.muted });
+    slide.addText(String(value), { x: x + 0.15, y: y + 0.32, w: w - 0.3, h: Math.max(h - 0.4, 0.3), fontSize: 18, bold: true, color: C.text });
+  }
+
+  function buildAndDownloadPptx(title, slides){
+    const C = PPTX_COLORS;
+    const pptx = new PptxGenJS();
+    pptx.defineLayout({ name: 'FOLD', width: 13.333, height: 7.5 });
+    pptx.layout = 'FOLD';
+
+    const cover = pptx.addSlide();
+    pptxAddBg(cover, 'cover');
+    cover.addText('FOLD AI', { x: 0.7, y: 0.45, w: 3.2, h: 0.25, fontSize: 10, bold: true, color: C.muted });
+    cover.addText(title, { x: 0.7, y: 0.85, w: 7.6, h: 1.1, fontSize: 32, bold: true, color: C.text, fontFace: 'Georgia' });
+    cover.addText('DECK', { x: 9.85, y: 1.0, w: 2.6, h: 0.25, fontSize: 10, bold: true, color: C.muted });
+    cover.addText('Fold AI', { x: 9.85, y: 1.25, w: 2.6, h: 0.5, fontSize: 20, bold: true, color: C.accent });
+    pptxKpi(cover, 0.7, 5.1, 1.9, 0.85, 'Slides', String(slides.length), C.accent);
+    pptxKpi(cover, 2.75, 5.1, 1.9, 0.85, 'Level', 'Grade 9-10', C.accent2);
+    pptxKpi(cover, 4.8, 5.1, 1.9, 0.85, 'Style', 'Fold AI', C.accent3);
+    cover.addText('Made with Fold AI', { x: 0.72, y: 6.5, w: 5, h: 0.3, fontSize: 10, bold: true, color: C.accent });
+
+    slides.forEach((s, i) => {
+      const idx = i + 1;
+      const bullets = Array.isArray(s.bullets) ? s.bullets : [];
+      const accent = [C.accent, C.accent2, C.accent3][idx % 3];
+      const layout = bullets.length <= 2 ? 'section' : (idx % 2 === 0 ? 'split' : 'content');
+      const slide = pptx.addSlide();
+      pptxAddBg(slide, layout);
+      const heading = s.heading || `Slide ${idx}`;
+      const kicker = `Slide ${String(idx).padStart(2, '0')}`;
+
+      if(layout === 'section'){
+        pptxSectionHeader(slide, heading, kicker, 0.8, 2.2, 8.8, accent);
+        if(bullets[0]) slide.addText(String(bullets[0]), { x: 0.8, y: 3.3, w: 8, h: 1, fontSize: 20, bold: true, color: C.text, fontFace: 'Georgia' });
+      } else if(layout === 'split'){
+        pptxSectionHeader(slide, heading, kicker, 0.8, 0.62, 8.6, accent);
+        pptxBulletCard(slide, 0.82, 1.65, 6.2, 5.0, 'Main ideas', bullets, accent);
+        slide.addShape('rect', { x: 7.3, y: 1.65, w: 5.1, h: 5.0, fill: { color: C.panel }, line: { type: 'none' } });
+        slide.addText('HIGHLIGHTS', { x: 7.55, y: 1.9, w: 4.5, h: 0.3, fontSize: 12, bold: true, color: accent });
+        let y = 2.35;
+        bullets.slice(0, 3).forEach(b => {
+          slide.addText('- ' + String(b), { x: 7.55, y, w: 4.5, h: 0.6, fontSize: 14, color: C.text });
+          y += 0.7;
+        });
+      } else {
+        pptxSectionHeader(slide, heading, kicker, 0.8, 0.62, 8.6, accent);
+        pptxBulletCard(slide, 0.82, 1.65, 7.3, 5.0, 'Overview', bullets, accent);
+        pptxKpi(slide, 8.35, 1.75, 3.1, 0.95, 'Topic', heading.slice(0, 16), accent);
+        pptxKpi(slide, 8.35, 2.85, 3.1, 0.95, 'Points', String(bullets.length), C.accent2);
+        pptxKpi(slide, 8.35, 3.95, 3.1, 0.95, 'Subject', 'Maths', C.accent3);
+      }
+    });
+
+    const safeName = (title || 'presentation').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 40) || 'presentation';
+    pptx.writeFile({ fileName: `${safeName}.pptx` });
+  }
+
+  async function callChatApi(body){
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await response.json();
+    if(!response.ok) throw new Error(data.error || 'Server error');
+    return data;
+  }
+
+  async function runChatTurn(imageBase64){
+    let data;
+    try {
+      data = await callChatApi({ system: SYSTEM_PROMPT, messages: history, ...(imageBase64 ? { image_base64: imageBase64 } : {}) });
+    } catch(e){
+      removeTyping();
+      addMessage('assistant', 'Server error: ' + e.message);
+      return;
+    }
+
+    const block = data.content?.[0];
+
+    if(block?.type === 'tool_use'){
+      updateTyping(`⚙️ Configuring — ${describeTool(block.name, block.input)}…`);
+      const result = await executeTool(block.name, block.input);
+
+      let followUp;
+      try {
+        followUp = await callChatApi({
+          system: SYSTEM_PROMPT,
+          messages: history,
+          function_call: { name: block.name, args: block.input },
+          function_result: result
+        });
+      } catch(e){
+        removeTyping();
+        const fallback = result.ok ? `Done — ${result.message}.` : `Couldn't do that: ${result.message}`;
+        addMessage('assistant', fallback);
+        history.push({ role: 'assistant', content: fallback });
+        saveCurrentChat();
+        return;
+      }
+
+      removeTyping();
+      const finalBlock = followUp.content?.[0];
+      const replyText = finalBlock?.type === 'text' && finalBlock.text
+        ? finalBlock.text
+        : (result.ok ? `Done — ${result.message}.` : `Couldn't do that: ${result.message}`);
+      addMessage('assistant', replyText);
+      history.push({ role: 'assistant', content: replyText });
+      saveCurrentChat();
+      return;
+    }
+
+    removeTyping();
+    const replyText = block?.text || "I couldn't process that — try again.";
+    addMessage('assistant', replyText);
+    history.push({ role: 'assistant', content: replyText });
+    saveCurrentChat();
+  }
+
+  async function sendMessage(promptOverride, displayOverride, imageBase64){
+    const text = (promptOverride !== undefined ? promptOverride : input.value).trim();
+    if(!text || isSending) return;
+    const displayText = displayOverride !== undefined ? displayOverride : text;
+
+    if(!currentChatId) currentChatId = 'chat-' + Date.now();
+
+    isSending = true;
+    sendBtn.disabled = true;
+    if(promptOverride === undefined){ input.value = ''; autoGrow(); }
+
+    addMessage('user', displayText);
+    history.push({ role: 'user', content: text });
+    saveCurrentChat();
+    renderHistoryList();
+    addTyping();
+
+    try {
+      await runChatTurn(imageBase64);
+    } catch (err) {
+      removeTyping();
+      addMessage('assistant', "Something went wrong reaching Fold AI. Please try again.");
+      console.error('Fold AI chat error:', err);
+    } finally {
+      isSending = false;
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  }
+
+  sendBtn.addEventListener('click', () => sendMessage());
+
+  const testMakerModal = document.getElementById('testMakerModal');
+  document.getElementById('testMakerBtn').addEventListener('click', () => testMakerModal.classList.add('show'));
+  document.getElementById('closeTestMaker').addEventListener('click', () => testMakerModal.classList.remove('show'));
+  testMakerModal.addEventListener('click', (e) => { if(e.target === testMakerModal) testMakerModal.classList.remove('show'); });
+
+  document.getElementById('generateTestBtn').addEventListener('click', () => {
+    const topic = document.getElementById('testTopic').value.trim() || 'a mix of grade 9-10 topics';
+    const count = document.getElementById('testCount').value;
+    const difficulty = document.getElementById('testDifficulty').value;
+    testMakerModal.classList.remove('show');
+    document.getElementById('testTopic').value = '';
+
+    const prompt = `Make a ${count}-question ${difficulty} difficulty revision test on "${topic}" for a grade 9-10 student. Number each question clearly. After all the questions, add a section titled "Answer Key" with the correct answer and a brief step-by-step solution for each one.`;
+    const displayLabel = `📝 Revision test — ${topic} (${count} questions, ${difficulty})`;
+    sendMessage(prompt, displayLabel);
+  });
+  input.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' && !e.shiftKey){
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+  document.querySelectorAll('.suggestion').forEach(btn => {
+    btn.addEventListener('click', () => sendMessage(btn.dataset.prompt));
+  });
+
+  document.getElementById('newChatBtn').addEventListener('click', startNewChat);
+
+  // Load saved chats on page start
+  startNewChat();
+
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  const upgradeModal = document.getElementById('upgradeModal');
+  document.getElementById('upgradeSidebarBtn').addEventListener('click', () => upgradeModal.classList.add('show'));
+  document.getElementById('closeUpgrade').addEventListener('click', () => upgradeModal.classList.remove('show'));
+  document.getElementById('upgradeConfirmBtn').addEventListener('click', () => {
+    upgradeModal.classList.remove('show');
+    showToast('Preview only — connect a payment provider to enable upgrades');
+  });
+
+  // ---------------- Jarvis Bridge ----------------
+  const BRIDGE_URL = 'http://127.0.0.1:8765';
+  const bridgeModal = document.getElementById('bridgeModal');
+  const bridgeStatus = document.getElementById('bridgeStatus');
+  const bridgeTokenInput = document.getElementById('bridgeToken');
+
+  function getBridgeToken(){ return localStorage.getItem('fold-bridge-token') || ''; }
+  function setBridgeToken(t){ localStorage.setItem('fold-bridge-token', t); }
+
+  async function checkBridge(){
+    try {
+      const res = await fetch(BRIDGE_URL + '/health');
+      if(res.ok){ bridgeStatus.textContent = '🟢 Connected to your Jarvis Bridge.'; return true; }
+    } catch(e){ /* bridge not running */ }
+    bridgeStatus.textContent = '🔴 Not connected — run bridge_server.py on this computer first.';
+    return false;
+  }
+
+  async function bridgeFetch(path, options = {}){
+    const token = getBridgeToken();
+    const res = await fetch(BRIDGE_URL + path, {
+      ...options,
+      headers: { 'Content-Type': 'application/json', 'X-Bridge-Token': token, ...(options.headers || {}) }
+    });
+    return res.json();
+  }
+
+  document.getElementById('bridgeSidebarBtn').addEventListener('click', () => {
+    bridgeModal.classList.add('show');
+    bridgeTokenInput.value = getBridgeToken();
+    checkBridge();
+  });
+  document.getElementById('closeBridge').addEventListener('click', () => bridgeModal.classList.remove('show'));
+  bridgeModal.addEventListener('click', (e) => { if(e.target === bridgeModal) bridgeModal.classList.remove('show'); });
+
+  document.getElementById('saveBridgeTokenBtn').addEventListener('click', async () => {
+    setBridgeToken(bridgeTokenInput.value.trim());
+    const ok = await checkBridge();
+    showToast(ok ? 'Bridge connected' : "Saved — but bridge_server.py isn't running");
+  });
+
+  document.getElementById('bridgeOpenAppBtn').addEventListener('click', async () => {
+    const name = document.getElementById('bridgeAppName').value.trim();
+    if(!name) return;
+    try {
+      const data = await bridgeFetch('/open-app', { method: 'POST', body: JSON.stringify({ name }) });
+      showToast(data.ok ? `Opened ${name}` : ('Bridge error: ' + data.message));
+    } catch(e){ showToast('Could not reach the bridge — is bridge_server.py running?'); }
+  });
+
+  document.getElementById('bridgeOpenUrlBtn').addEventListener('click', async () => {
+    const url = document.getElementById('bridgeUrl').value.trim();
+    if(!url) return;
+    try {
+      const data = await bridgeFetch('/open-url', { method: 'POST', body: JSON.stringify({ url }) });
+      showToast(data.ok ? `Opened ${url}` : ('Bridge error: ' + data.message));
+    } catch(e){ showToast('Could not reach the bridge — is bridge_server.py running?'); }
+  });
+
+  document.getElementById('bridgeScanBtn').addEventListener('click', async () => {
+    try {
+      const data = await bridgeFetch('/screenshot');
+      if(!data.image_base64){ showToast(data.error || 'Screenshot failed'); return; }
+      bridgeModal.classList.remove('show');
+      sendMessage('What is on my screen right now? Describe it clearly and usefully.', '📸 Scanned my screen', data.image_base64);
+    } catch(e){ showToast('Could not reach the bridge — is bridge_server.py running?'); }
+  });
+
+  const signInModal = document.getElementById('signInModal');
+  const signInBtn = document.getElementById('signInBtn');
+  document.getElementById('signInBtn').addEventListener('click', () => signInModal.classList.add('show'));
+  document.getElementById('closeSignIn').addEventListener('click', () => signInModal.classList.remove('show'));
+
+  document.getElementById('googleAuthBtn').addEventListener('click', () => {
+    showToast('Needs a real Google OAuth client from your own Google Cloud project to actually connect');
+  });
+  document.getElementById('facebookAuthBtn').addEventListener('click', () => {
+    showToast('Needs a real Facebook app ID from your own Meta developer account to actually connect');
+  });
+
+  let isSignUpMode = false;
+  const authHeading = document.getElementById('authHeading');
+  const nameFieldWrap = document.getElementById('nameFieldWrap');
+  const authSwitchText = document.getElementById('authSwitchText');
+
+  function renderAuthSwitch(){
+    if(isSignUpMode){
+      authHeading.textContent = 'Create your account';
+      nameFieldWrap.style.display = 'block';
+      authSwitchText.innerHTML = 'Already have an account? <button type="button" id="authSwitchBtn">Sign in</button>';
+    } else {
+      authHeading.textContent = 'Welcome back';
+      nameFieldWrap.style.display = 'none';
+      authSwitchText.innerHTML = "Don't have an account? <button type=\"button\" id=\"authSwitchBtn\">Sign up</button>";
+    }
+    document.getElementById('authSwitchBtn').addEventListener('click', () => {
+      isSignUpMode = !isSignUpMode;
+      renderAuthSwitch();
+    });
+  }
+  renderAuthSwitch();
+
+  let currentUser = null;
+  function renderSignedInState(){
+    const initials = currentUser.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    signInBtn.outerHTML = `<button class="sidebar-btn user-chip" id="signInBtn"><span class="avatar user">${initials}</span><span class="user-chip-name">${currentUser.name}</span></button>`;
+    document.getElementById('signInBtn').addEventListener('click', () => showToast('Signed in as ' + currentUser.email));
+  }
+
+  document.getElementById('emailAuthForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('authEmail').value.trim();
+    const name = isSignUpMode
+      ? (document.getElementById('authName').value.trim() || email.split('@')[0])
+      : email.split('@')[0];
+    currentUser = { name, email };
+    signInModal.classList.remove('show');
+    renderSignedInState();
+    showToast((isSignUpMode ? 'Account created' : 'Signed in') + ' as ' + name);
+  });
+
+  [upgradeModal, signInModal].forEach(m => {
+    m.addEventListener('click', (e) => { if(e.target === m) m.classList.remove('show'); });
+  });
+
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+  const themeLabel = document.getElementById('themeLabel');
+  const themeIcon = document.getElementById('themeIcon');
+  let isDark = false;
+  themeToggleBtn.addEventListener('click', () => {
+    isDark = !isDark;
+    if(isDark){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeLabel.textContent = 'Light mode';
+      themeIcon.className = 'ti ti-sun';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeLabel.textContent = 'Dark mode';
+      themeIcon.className = 'ti ti-moon';
+    }
+  });
+
+  const sidebar = document.getElementById('sidebar');
+  const sidebarOpenBtn = document.getElementById('sidebarOpenBtn');
+  function collapseSidebar(){
+    sidebar.classList.add('collapsed');
+    sidebarOpenBtn.classList.add('show');
+  }
+  collapseSidebar();
+  document.getElementById('sidebarCollapseBtn').addEventListener('click', collapseSidebar);
+  sidebarOpenBtn.addEventListener('click', () => {
+    sidebar.classList.remove('collapsed');
+    sidebarOpenBtn.classList.remove('show');
+  });
+
+  document.getElementById('historySearch').addEventListener('input', (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('.history-item').forEach(item => {
+      item.style.display = item.textContent.toLowerCase().includes(q) ? 'block' : 'none';
+    });
+  });
+</script>
+
+</body>
+</html>
